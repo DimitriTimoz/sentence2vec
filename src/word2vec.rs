@@ -1,8 +1,12 @@
-use std::{collections::HashMap, path::Path};
-
+use std::{collections::HashMap};
+#[cfg(feature = "loading")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "loading")]
+use std::path::Path;
+
 /// Word vector of dimension D.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "loading", derive(Serialize, Deserialize))]
 pub struct WordVec<const D: usize> {
     vec: Vec<f32>,
 }
@@ -41,7 +45,7 @@ pub trait Word2VecTrait<const D: usize> {
 /// Word2Vec model.
 /// Contains a map from words to vectors.
 /// D is the dimension of the vectors.
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "loading", derive(Serialize, Deserialize))]
 pub struct Word2Vec<const D: usize> {
     word_vecs: HashMap<String, WordVec<D>>,
 }
@@ -50,6 +54,7 @@ impl<const D: usize> Word2Vec<D> {
     /// Load the word2vec model from a text file with the format:
     /// word1 0.1 0.2 0.3 ... 0.1
     /// word1 is the word, and the rest are the vector of dimension D.
+    #[cfg(feature = "loading")]
     pub fn load_from_txt<P>(path: P) -> Self
     where
         P: AsRef<Path>,
@@ -72,6 +77,7 @@ impl<const D: usize> Word2Vec<D> {
     }
 
     /// Save the word2vec model to a binary file with custom serialization.
+    #[cfg(feature = "loading")]
     pub fn save_to_bytes<P>(&self, path: P)
     where
         P: AsRef<Path>,
@@ -82,6 +88,7 @@ impl<const D: usize> Word2Vec<D> {
     }
 
     /// Load the word2vec model from a binary file with custom serialization.
+    #[cfg(feature = "loading")]
     pub fn load_from_bytes<P>(path: P) -> Self
     where
         P: AsRef<Path>,
