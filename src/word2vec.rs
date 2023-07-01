@@ -1,6 +1,6 @@
-use std::{collections::HashMap};
 #[cfg(feature = "loading")]
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 #[cfg(feature = "loading")]
 use std::path::Path;
 
@@ -143,7 +143,7 @@ impl<const D: usize> Word2Vec<D> {
 
             current_map.insert(word.to_string(), self.get_vec(word).unwrap().clone());
 
-            if i % words_per_file == 0 || i == words.len() - 1{
+            if i % words_per_file == 0 || i == words.len() - 1 {
                 let mut file = current_folder.clone();
                 file.push(words[i]);
                 file.set_extension("bin");
@@ -154,6 +154,34 @@ impl<const D: usize> Word2Vec<D> {
                 trace!("Created file {}", file.display());
             }
         }
+    }
+
+    /// Get the subset of words that are in the model from the list.
+    pub fn get_subset(&self, words: &[String]) -> Word2Vec<D> {
+        let mut word_vecs = HashMap::new();
+        for word in words {
+            if let Some(vec) = self.get_vec(word) {
+                word_vecs.insert(word.to_string(), vec.clone());
+            }
+        }
+        Self { word_vecs }
+    }
+
+    /// Get the subset of words that are in the model from wordlist.txt.
+    #[cfg(feature = "loading")]
+    pub fn get_subset_from_wordlist<P>(&self, path: P) -> Word2Vec<D>
+    where
+        P: AsRef<Path>,
+    {
+        use crate::file::read_lines;
+
+        let mut word_vecs = HashMap::new();
+        for word in crate::file::read_lines(path).unwrap().flatten() {
+            if let Some(vec) = self.get_vec(&word) {
+                word_vecs.insert(word.to_string(), vec.clone());
+            }
+        }
+        Self { word_vecs }
     }
 }
 
