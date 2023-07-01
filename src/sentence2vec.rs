@@ -1,13 +1,13 @@
-use crate::word2vec::{Word2Vec, Word2VecTrait, WordVec};
+use crate::word2vec::{Word2VecTrait, WordVec};
 
 /// Sentence2Vec model.
 /// Contains a Word2Vec model.
 pub struct Sentence2Vec<const D: usize> {
-    word2vec: Word2Vec<D>,
+    word2vec: Box<dyn Word2VecTrait<D> + 'static>,
 }
 
 impl<const D: usize> Sentence2Vec<D> {
-    pub fn new(word2vec: Word2Vec<D>) -> Self {
+    pub fn new(word2vec: Box<dyn Word2VecTrait<D>>) -> Self {
         Self { word2vec }
     }
 
