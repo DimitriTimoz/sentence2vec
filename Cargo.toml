@@ -2,6 +2,11 @@
 name = "sentence2vec"
 version = "0.1.0"
 edition = "2021"
+authors = ["Dimitri Timoz <dimitri.timoz@protonmail.com>"]
+description = "A tool to convert a sentence to a vector. It can be used to partition word2vec data. It can also be used to extract a list of words from a word2vec data file."
+license = "MIT"
+repository = "https://github.com/DimitriTimoz/sentence2vec"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
