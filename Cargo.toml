@@ -15,6 +15,7 @@ name = "extract"
 path = "bin/extract_list.rs"
 
 [dependencies]
+tokio = { version = "1.12", features = ["rt", "macros"] }
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_bytes = { version = "0.11.5", optional = true }
 bincode = { version = "1.3.3", optional = true }
@@ -24,3 +25,4 @@ env_logger = { version = "0.10", optional = true }
 [features]
 loading = ["bincode", "serde_bytes", "serde"]
 partition = ["log", "env_logger", "loading"]
+

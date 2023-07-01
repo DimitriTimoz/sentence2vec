@@ -55,7 +55,7 @@ impl<const D: usize> Word2Vec<D> {
     /// word1 0.1 0.2 0.3 ... 0.1
     /// word1 is the word, and the rest are the vector of dimension D.
     #[cfg(feature = "loading")]
-    pub fn load_from_txt<P>(path: P) -> Self
+    pub async fn load_from_txt<P>(path: P) -> Self
     where
         P: AsRef<Path>,
     {
@@ -72,13 +72,13 @@ impl<const D: usize> Word2Vec<D> {
     }
 
     /// Create a new Word2Vec from a map of words to vectors.
-    pub fn from_word_vecs(word_vecs: HashMap<String, WordVec<D>>) -> Self {
+    pub async fn from_word_vecs(word_vecs: HashMap<String, WordVec<D>>) -> Self {
         Self { word_vecs }
     }
 
     /// Save the word2vec model to a binary file with custom serialization.
     #[cfg(feature = "loading")]
-    pub fn save_to_bytes<P>(&self, path: P)
+    pub async fn save_to_bytes<P>(&self, path: P)
     where
         P: AsRef<Path>,
     {
@@ -89,7 +89,7 @@ impl<const D: usize> Word2Vec<D> {
 
     /// Load the word2vec model from a binary file with custom serialization.
     #[cfg(feature = "loading")]
-    pub fn load_from_bytes<P>(path: P) -> Self
+    pub async fn load_from_bytes<P>(path: P) -> Self
     where
         P: AsRef<Path>,
     {
@@ -109,7 +109,7 @@ impl<const D: usize> Word2Vec<D> {
     /// Partition the word2vec model into f folders for a total of n files.
     /// The words are sorted alphabetically and distributed evenly.
     /// Files and folders are named as the first word they contain.
-    pub fn partition<P>(&self, dist: P, n: usize, f: usize)
+    pub async fn partition<P>(&self, dist: P, n: usize, f: usize)
     where
         P: AsRef<Path>,
     {
@@ -157,7 +157,7 @@ impl<const D: usize> Word2Vec<D> {
     }
 
     /// Get the subset of words that are in the model from the list.
-    pub fn get_subset(&self, words: &[String]) -> Word2Vec<D> {
+    pub async fn get_subset(&self, words: &[String]) -> Word2Vec<D> {
         let mut word_vecs = HashMap::new();
         for word in words {
             if let Some(vec) = self.get_vec(word) {
@@ -169,7 +169,7 @@ impl<const D: usize> Word2Vec<D> {
 
     /// Get the subset of words that are in the model from wordlist.txt.
     #[cfg(feature = "loading")]
-    pub fn get_subset_from_wordlist<P>(&self, path: P) -> Word2Vec<D>
+    pub async fn get_subset_from_wordlist<P>(&self, path: P) -> Word2Vec<D>
     where
         P: AsRef<Path>,
     {
@@ -209,28 +209,33 @@ mod tests {
         assert_eq!(vec1.cosine(&vec3), 0.0);
     }
 
-    #[test]
-    fn test_word2vec() {
+    #[tokio::test]
+    async fn test_word2vec() {
         let mut word_vecs = HashMap::new();
         word_vecs.insert("word1".to_string(), WordVec::new([1.0, 0.0]));
         word_vecs.insert("word2".to_string(), WordVec::new([0.0, 1.0]));
-        let word2vec = Word2Vec::from_word_vecs(word_vecs);
+        let word2vec = Word2Vec::from_word_vecs(word_vecs).await;
 
         assert_eq!(word2vec.cosine("word1", "word2"), 0.0);
         assert_eq!(word2vec.cosine("word1", "word1"), 1.0);
     }
 
-    #[test]
-    fn test_word2vec_subset() {
+    #[tokio::test]
+    async fn test_word2vec_subset() {
         let mut word_vecs = HashMap::new();
         word_vecs.insert("word1".to_string(), WordVec::new([1.0, 2.0, 3.0]));
         word_vecs.insert("word2".to_string(), WordVec::new([1.0, 2.0, 4.0]));
-        let word2vec = Word2Vec::from_word_vecs(word_vecs);
+        let word2vec = Word2Vec::from_word_vecs(word_vecs).await;
 
-        let subset = word2vec.get_subset(&["word1".to_string(), "word3".to_string()]);
+        let subset = word2vec.get_subset(&["word1".to_string(), "word3".to_string()]).await;
 
         assert_eq!(subset.word_vecs.len(), 1);
         assert_eq!(subset.word_vecs.get("word1").unwrap().get_vec(), &[1.0, 2.0, 3.0]);
+    }
+
+    #[tokio::test]
+    fn test_word2vec_load() {
+
     }
 
 }

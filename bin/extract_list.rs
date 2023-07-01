@@ -1,6 +1,7 @@
 
 #[cfg(feature = "partition")]
-fn main() {
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
     use std::io::{BufRead, self, Write};
 
     use sentence2vec::prelude::*;
@@ -20,13 +21,14 @@ fn main() {
     io::stdout().flush().unwrap();
     let dist = std::io::stdin().lock().lines().next().unwrap().unwrap();
     
-    let word2vec: Word2Vec<300> = Word2Vec::load_from_bytes(path);
+    let word2vec: Word2Vec<300> = Word2Vec::load_from_bytes(path).await;
 
-    let subset = word2vec.get_subset_from_wordlist(wordlist);
-    subset.save_to_bytes(dist);
+    let subset = word2vec.get_subset_from_wordlist(wordlist).await;
+    subset.save_to_bytes(dist).await;
 }
 
 #[cfg(not(feature = "partition"))]
+
 fn main() {
     panic!("This binary is empty partition feature isn't set.");
 }

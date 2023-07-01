@@ -1,5 +1,6 @@
 #[cfg(feature = "partition")]
-fn main() {
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
     use std::io::{self, BufRead, Write};
 
     use sentence2vec::prelude::*;
@@ -37,8 +38,8 @@ fn main() {
         .parse::<usize>()
         .unwrap();
 
-    let word2vec: Word2Vec<300> = Word2Vec::load_from_bytes(path);
-    word2vec.partition(dist, partitions, folders)
+    let word2vec: Word2Vec<300> = Word2Vec::load_from_bytes(path).await;
+    word2vec.partition(dist, partitions, folders).await;
 }
 
 #[cfg(not(feature = "partition"))]
