@@ -43,6 +43,7 @@ impl<const D: usize> Sentence2Vec<D> {
         }
     }
 
+    /// Returns the cosine similarity between two sentences.
     pub async fn cosine(&self, sentence1: &str, sentence2: &str) -> Option<f32> {
         if let (Some(vec1), Some(vec2)) = (self.get_vec(sentence1).await, self.get_vec(sentence2).await) {
             Some(vec1.cosine(&vec2))
