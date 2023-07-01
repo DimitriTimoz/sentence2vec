@@ -59,20 +59,25 @@ impl<const D: usize> Word2Vec<D> {
     /// word1 0.1 0.2 0.3 ... 0.1
     /// word1 is the word, and the rest are the vector of dimension D.
     #[cfg(feature = "loading")]
-    pub async fn load_from_txt<P>(path: P) -> Self
+    pub async fn load_from_txt<P>(path: P) -> Option<Self>
     where
         P: AsRef<Path>,
     {
         let mut word_vecs = HashMap::new();
-
-        for line in crate::file::read_lines(path).unwrap().skip(1) {
-            let line = line.unwrap();
-            let mut iter = line.split_whitespace();
-            let word = iter.next().unwrap();
-            let vec = iter.map(|s| s.parse::<f32>().unwrap()).collect::<Vec<_>>();
-            word_vecs.insert(word.to_string(), WordVec::new(vec.try_into().unwrap()));
+        let lines = crate::file::read_lines(path);
+        if let Ok(lines) = lines {
+            for line in lines.skip(1) {
+                let line = line.unwrap();
+                let mut iter = line.split_whitespace();
+                let word = iter.next().unwrap();
+                let vec = iter.map(|s| s.parse::<f32>().unwrap()).collect::<Vec<_>>();
+                word_vecs.insert(word.to_string(), WordVec::new(vec.try_into().unwrap()));
+            }
+            Some(Self { word_vecs })
+        } else {
+            None
         }
-        Self { word_vecs }
+        
     }
 
     /// Create a new Word2Vec from a map of words to vectors.
@@ -245,7 +250,9 @@ mod tests {
     #[cfg(feature = "loading")]
     #[tokio::test]
     async fn test_word2vec_load() {
-        let word2vec: Word2Vec<3> = Word2Vec::load_from_txt("tests/word2vec.txt").await;
+        let word2vec: Word2Vec<3> = Word2Vec::load_from_txt("tests/word2vec.txt").await.unwrap();
+
+        assert!(Word2Vec::<30>::load_from_txt("tests/word2v9+65ds6d5ec.txt").await.is_none());
 
         assert_eq!(word2vec.word_vecs.len(), 5);
 
