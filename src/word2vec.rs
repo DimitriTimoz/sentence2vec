@@ -34,6 +34,10 @@ impl<const D: usize> WordVec<D> {
             norm2 += v2 * v2;
         }
 
+        if norm1 == 0.0 || norm2 == 0.0 {
+            eprintln!("Warning: the norm of a vector is 0.");
+        }
+
         dot.powi(2) / (norm1 * norm2)
     }
 }
@@ -207,6 +211,11 @@ mod tests {
         // Calculate the cosine similarity of two vectors.
         assert_eq!(vec1.cosine(&vec2), 1.0);
         assert_eq!(vec1.cosine(&vec3), 0.0);
+
+        // Test with norm 0.
+        let vec1 = WordVec::new([0.0, 0.0]);
+        assert!(vec1.cosine(&vec2).is_nan());
+
     }
 
     #[tokio::test]
@@ -233,9 +242,14 @@ mod tests {
         assert_eq!(subset.word_vecs.get("word1").unwrap().get_vec(), &[1.0, 2.0, 3.0]);
     }
 
+    #[cfg(feature = "loading")]
     #[tokio::test]
-    fn test_word2vec_load() {
+    async fn test_word2vec_load() {
+        let word2vec: Word2Vec<3> = Word2Vec::load_from_txt("tests/word2vec.txt").await;
 
+        assert_eq!(word2vec.word_vecs.len(), 5);
+
+        assert_eq!(word2vec.cosine("chien", "chat"), 0.0);
     }
 
 }
