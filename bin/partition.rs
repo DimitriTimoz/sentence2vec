@@ -1,8 +1,10 @@
-use std::io::{BufRead, self, Write};
 
-use sentence2vec::prelude::*;
-
+#[cfg(feature = "partition")]
 fn main() {
+    use std::io::{BufRead, self, Write};
+
+    use sentence2vec::prelude::*;
+
     env_logger::init();
 
     // Ask the binary to load the model from a text file.
@@ -24,4 +26,9 @@ fn main() {
 
     let word2vec: Word2Vec<300> = Word2Vec::load_from_bytes(path);
     word2vec.partition(dist, partitions, folders)
+}
+
+#[cfg(not(feature = "partition"))]
+fn main() {
+    panic!("This binary is empty partition feature isn't set.");
 }

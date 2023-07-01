@@ -1,6 +1,5 @@
 use std::{collections::HashMap, path::Path};
 
-use log::{info, trace};
 use serde::{Deserialize, Serialize};
 /// Word vector of dimension D.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -99,7 +98,7 @@ impl<const D: usize> Word2Vec<D> {
         vec1.cosine(vec2)
     }
 
-    //#[cfg(feature = "partition")]
+    #[cfg(feature = "partition")]
     /// Partition the word2vec model into f folders for a total of n files.
     /// The words are sorted alphabetically and distributed evenly.
     /// Files and folders are named as the first word they contain.
@@ -107,6 +106,8 @@ impl<const D: usize> Word2Vec<D> {
     where
         P: AsRef<Path>,
     {
+        use log::{info, trace};
+
         info!("Partitioning into {} folders and {} files", f, n);
         let mut dist = dist.as_ref().to_path_buf();
         dist.push("word2vec");
