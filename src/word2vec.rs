@@ -1,10 +1,9 @@
 use std::{collections::HashMap, path::Path};
 
 use serde::{Serialize, Deserialize};
-
-
+use log::{trace, info};
 /// Word vector of dimension D.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WordVec<const D: usize> {
     vec: Vec<f32>
 }
@@ -66,6 +65,11 @@ impl<const D: usize> Word2Vec<D> {
         Self { word_vecs }
     }
 
+    /// Create a new Word2Vec from a map of words to vectors.
+    pub fn from_word_vecs(word_vecs: HashMap<String, WordVec<D>>) -> Self {
+        Self { word_vecs }
+    }
+
     /// Get the vector of a word.
     pub fn get_vec(&self, word: &str) -> Option<&WordVec<D>> {
         self.word_vecs.get(word)
@@ -95,5 +99,56 @@ impl<const D: usize> Word2Vec<D> {
 
         vec1.cosine(vec2)
     }
+    
+    //#[cfg(feature = "partition")]
+    /// Partition the word2vec model into f folders for a total of n files.
+    /// The words are sorted alphabetically and distributed evenly.
+    /// Files and folders are named as the first word they contain.
+    pub fn partition<P>(&self, dist: P, n: usize, f: usize) 
+    where P: AsRef<Path>,
+    {
+        info!("Partitioning into {} folders and {} files", f, n);
+        let mut dist = dist.as_ref().to_path_buf();
+        dist.push("word2vec");
+        std::fs::create_dir_all(&dist).unwrap();
+
+        // Sort the words alphabetically.
+        let mut words = self.word_vecs.keys().collect::<Vec<_>>();
+        
+        trace!("Sorting {} words", words.len());
+        words.sort();
+        trace!("Done sorting");
+        // Calculate the number of words per file.
+        let words_per_file = words.len() / n;
+        let words_per_folder = words.len() / f;
+
+        // Create the folders.
+        let mut current_map: HashMap<String, WordVec<D>> = HashMap::new();
+        let mut current_folder = dist.clone();
+        for (i, word) in words.iter().enumerate() {
+            if i % words_per_folder == 0 {
+                current_folder = dist.clone();
+                current_folder.push(words[i]);
+                std::fs::create_dir_all(&current_folder).unwrap();
+                trace!("Created folder {}", current_folder.display());
+            }
+
+            current_map.insert(word.to_string(), self.get_vec(word).unwrap().clone());
+
+            if i % words_per_file == 0 {
+                let mut file = current_folder.clone();
+                file.push(words[i]);
+                file.set_extension("bin");
+                let mut bytes = Vec::new();
+                trace!("Creating file {}", file.display());
+                bincode::serialize_into(&mut bytes, &current_map).unwrap();
+                std::fs::write(file.clone(), bytes).unwrap();
+                current_map.clear();
+                trace!("Created file {}", file.display());
+            }
+        }
+    }
 }
+
+
 

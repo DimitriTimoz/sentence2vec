@@ -4,8 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+
+[[bin]]
+name = "partition"
+path = "bin/partition.rs"
+
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11.5"
 bincode = "1.3.3"
+log = { version = "0.4.14" }
+env_logger = "0.10"
+[features]
