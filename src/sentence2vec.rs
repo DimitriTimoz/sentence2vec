@@ -1,4 +1,4 @@
-use crate::word2vec::{Word2Vec, WordVec};
+use crate::word2vec::{Word2Vec, WordVec, Word2VecTrait};
 
 /// Sentence2Vec model.
 /// Contains a Word2Vec model.

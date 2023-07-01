@@ -36,6 +36,11 @@ impl<const D: usize> WordVec<D> {
 }
 
 
+pub trait Word2VecTrait<const D: usize> {
+    fn get_vec(&self, word: &str) -> Option<&WordVec<D>>;
+}
+
+
 /// Word2Vec model.
 /// Contains a map from words to vectors.
 /// D is the dimension of the vectors.
@@ -68,11 +73,6 @@ impl<const D: usize> Word2Vec<D> {
     /// Create a new Word2Vec from a map of words to vectors.
     pub fn from_word_vecs(word_vecs: HashMap<String, WordVec<D>>) -> Self {
         Self { word_vecs }
-    }
-
-    /// Get the vector of a word.
-    pub fn get_vec(&self, word: &str) -> Option<&WordVec<D>> {
-        self.word_vecs.get(word)
     }
 
     /// Save the word2vec model to a binary file with custom serialization.
@@ -147,6 +147,12 @@ impl<const D: usize> Word2Vec<D> {
                 trace!("Created file {}", file.display());
             }
         }
+    }
+}
+
+impl<const D: usize> Word2VecTrait<D> for Word2Vec<D>  {
+    fn get_vec(&self, word: &str) -> Option<&WordVec<D>> {
+        self.word_vecs.get(word)
     }
 }
 
