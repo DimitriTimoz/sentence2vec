@@ -31,7 +31,7 @@ impl<const D: usize> WordVec<D> {
             norm2 += v2 * v2;
         }
 
-        dot / (norm1 * norm2).sqrt()
+        dot.powi(2) / (norm1 * norm2)
     }
 }
 
