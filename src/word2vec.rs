@@ -135,7 +135,7 @@ impl<const D: usize> Word2Vec<D> {
 
             current_map.insert(word.to_string(), self.get_vec(word).unwrap().clone());
 
-            if i % words_per_file == 0 {
+            if i % words_per_file == 0 || i == words.len() - 1{
                 let mut file = current_folder.clone();
                 file.push(words[i]);
                 file.set_extension("bin");
