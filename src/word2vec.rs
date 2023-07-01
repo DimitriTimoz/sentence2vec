@@ -209,4 +209,28 @@ mod tests {
         assert_eq!(vec1.cosine(&vec3), 0.0);
     }
 
+    #[test]
+    fn test_word2vec() {
+        let mut word_vecs = HashMap::new();
+        word_vecs.insert("word1".to_string(), WordVec::new([1.0, 0.0]));
+        word_vecs.insert("word2".to_string(), WordVec::new([0.0, 1.0]));
+        let word2vec = Word2Vec::from_word_vecs(word_vecs);
+
+        assert_eq!(word2vec.cosine("word1", "word2"), 0.0);
+        assert_eq!(word2vec.cosine("word1", "word1"), 1.0);
+    }
+
+    #[test]
+    fn test_word2vec_subset() {
+        let mut word_vecs = HashMap::new();
+        word_vecs.insert("word1".to_string(), WordVec::new([1.0, 2.0, 3.0]));
+        word_vecs.insert("word2".to_string(), WordVec::new([1.0, 2.0, 4.0]));
+        let word2vec = Word2Vec::from_word_vecs(word_vecs);
+
+        let subset = word2vec.get_subset(&["word1".to_string(), "word3".to_string()]);
+
+        assert_eq!(subset.word_vecs.len(), 1);
+        assert_eq!(subset.word_vecs.get("word1").unwrap().get_vec(), &[1.0, 2.0, 3.0]);
+    }
+
 }
