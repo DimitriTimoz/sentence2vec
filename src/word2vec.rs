@@ -64,8 +64,6 @@ impl<const D: usize> Word2Vec<D> {
     where
         P: AsRef<Path>,
     {
-        use log::warn;
-
         let mut word_vecs = HashMap::new();
         let lines = crate::file::read_lines(path);
         if let Ok(lines) = lines {
@@ -77,7 +75,7 @@ impl<const D: usize> Word2Vec<D> {
                         // This is safe because we know the length of the vector.s
                         word_vecs.insert(word.to_string(), WordVec::new(vec.try_into().unwrap()));
                     } else {
-                        warn!("The vector of {} is not of dimension {}, so it wasn't insert.", word, D)
+                        eprintln!("The vector of {} is not of dimension {}, so it wasn't insert.", word, D)
                     }    
                 }
                 
