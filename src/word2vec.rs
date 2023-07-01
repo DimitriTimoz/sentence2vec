@@ -115,9 +115,9 @@ impl<const D: usize> Word2Vec<D> {
         // Sort the words alphabetically.
         let mut words = self.word_vecs.keys().collect::<Vec<_>>();
         
-        trace!("Sorting {} words", words.len());
+        info!("Sorting {} words", words.len());
         words.sort();
-        trace!("Done sorting");
+        info!("Done sorting");
         // Calculate the number of words per file.
         let words_per_file = words.len() / n;
         let words_per_folder = words.len() / f;
@@ -140,7 +140,6 @@ impl<const D: usize> Word2Vec<D> {
                 file.push(words[i]);
                 file.set_extension("bin");
                 let mut bytes = Vec::new();
-                trace!("Creating file {}", file.display());
                 bincode::serialize_into(&mut bytes, &current_map).unwrap();
                 std::fs::write(file.clone(), bytes).unwrap();
                 current_map.clear();
