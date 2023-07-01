@@ -177,6 +177,7 @@ impl<const D: usize> Word2Vec<D> {
     }
 
     /// Get the subset of words that are in the model from the list.
+    /// If a word is not in the model, it is ignored.
     pub async fn get_subset(&self, words: &[String]) -> Word2Vec<D> {
         let mut word_vecs = HashMap::new();
         for word in words {
@@ -188,6 +189,7 @@ impl<const D: usize> Word2Vec<D> {
     }
 
     /// Get the subset of words that are in the model from wordlist.txt.
+    /// If a word is not in the model, it is ignored.
     #[cfg(feature = "loading")]
     pub async fn get_subset_from_wordlist<P>(&self, path: P) -> Result<Word2Vec<D>, Box<dyn std::error::Error>>
     where
@@ -204,6 +206,7 @@ impl<const D: usize> Word2Vec<D> {
 }
 
 impl<const D: usize> Word2VecTrait<D> for Word2Vec<D> {
+    /// Get the vector of a word.
     fn get_vec(&self, word: &str) -> Option<&WordVec<D>> {
         self.word_vecs.get(word)
     }
@@ -271,9 +274,27 @@ mod tests {
 
     #[cfg(feature = "loading")]
     #[tokio::test]
-    async fn test_save_from_byte() {
+    async fn test_save_and_load_from_byte() {
         let word2vec: Word2Vec<3> = Word2Vec::load_from_txt("tests/word2vec.txt").await.unwrap();
         assert!(word2vec.save_to_bytes("tests/word2vec.bin").await.is_ok());
+        test_load_from_byte().await;
+    }
+
+    #[cfg(feature = "loading")]
+    async fn test_load_from_byte() {
+        let word2vec: Word2Vec<3> = Word2Vec::load_from_txt("tests/word2vec.txt").await.unwrap();
+        assert!(Word2Vec::<3>::load_from_bytes("tests/word2vec.bin").await.is_some());
+
+        // Check that the two models are the same.
+        let word2vec2: Word2Vec<3> = Word2Vec::load_from_bytes("tests/word2vec.bin").await.unwrap();
+        assert_eq!(word2vec.word_vecs.len(), word2vec2.word_vecs.len());
+
+        for (word, vec) in word2vec.word_vecs.iter() {
+            assert_eq!(word2vec2.word_vecs.get(word).unwrap().get_vec(), vec.get_vec());
+        }
+
+        // Wrong file.
+        assert!(Word2Vec::<3>::load_from_bytes("tests/word2vec.txt").await.is_none());
     }
 
 }
