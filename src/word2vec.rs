@@ -193,9 +193,6 @@ impl<const D: usize> Word2Vec<D> {
     where
         P: AsRef<Path>,
     {
-
-        use crate::file::read_lines;
-
         let mut word_vecs = HashMap::new();
         for word in crate::file::read_lines(path)?.flatten() {
             if let Some(vec) = self.get_vec(&word) {
