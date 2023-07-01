@@ -190,3 +190,23 @@ impl<const D: usize> Word2VecTrait<D> for Word2Vec<D> {
         self.word_vecs.get(word)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_wordvec() {
+        let vec1 = WordVec::new([1.0, 0.0]);
+        let vec2 = WordVec::new([1.0, 0.0]);
+        let vec3 = WordVec::new([0.0, 1.0]);
+
+        // Get the vector as a slice.
+        assert_eq!(vec1.get_vec(), &[1.0, 0.0]);
+
+        // Calculate the cosine similarity of two vectors.
+        assert_eq!(vec1.cosine(&vec2), 1.0);
+        assert_eq!(vec1.cosine(&vec3), 0.0);
+    }
+
+}
