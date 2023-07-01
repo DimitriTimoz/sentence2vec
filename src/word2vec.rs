@@ -1,11 +1,11 @@
 use std::{collections::HashMap, path::Path};
 
-use serde::{Serialize, Deserialize};
-use log::{trace, info};
+use log::{info, trace};
+use serde::{Deserialize, Serialize};
 /// Word vector of dimension D.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WordVec<const D: usize> {
-    vec: Vec<f32>
+    vec: Vec<f32>,
 }
 
 impl<const D: usize> WordVec<D> {
@@ -35,11 +35,9 @@ impl<const D: usize> WordVec<D> {
     }
 }
 
-
 pub trait Word2VecTrait<const D: usize> {
     fn get_vec(&self, word: &str) -> Option<&WordVec<D>>;
 }
-
 
 /// Word2Vec model.
 /// Contains a map from words to vectors.
@@ -50,13 +48,12 @@ pub struct Word2Vec<const D: usize> {
 }
 
 impl<const D: usize> Word2Vec<D> {
-
     /// Load the word2vec model from a text file with the format:
-    /// word1 0.1 0.2 0.3 ... 0.1 
+    /// word1 0.1 0.2 0.3 ... 0.1
     /// word1 is the word, and the rest are the vector of dimension D.
-    pub fn load_from_txt<P>(path: P) 
-    -> Self
-    where P: AsRef<Path>, 
+    pub fn load_from_txt<P>(path: P) -> Self
+    where
+        P: AsRef<Path>,
     {
         let mut word_vecs = HashMap::new();
 
@@ -77,7 +74,8 @@ impl<const D: usize> Word2Vec<D> {
 
     /// Save the word2vec model to a binary file with custom serialization.
     pub fn save_to_bytes<P>(&self, path: P)
-    where P: AsRef<Path>, 
+    where
+        P: AsRef<Path>,
     {
         let mut bytes = Vec::new();
         bincode::serialize_into(&mut bytes, &self).unwrap();
@@ -86,7 +84,8 @@ impl<const D: usize> Word2Vec<D> {
 
     /// Load the word2vec model from a binary file with custom serialization.
     pub fn load_from_bytes<P>(path: P) -> Self
-    where P: AsRef<Path>,
+    where
+        P: AsRef<Path>,
     {
         let bytes = std::fs::read(path).unwrap();
         bincode::deserialize(&bytes).unwrap()
@@ -99,13 +98,14 @@ impl<const D: usize> Word2Vec<D> {
 
         vec1.cosine(vec2)
     }
-    
+
     //#[cfg(feature = "partition")]
     /// Partition the word2vec model into f folders for a total of n files.
     /// The words are sorted alphabetically and distributed evenly.
     /// Files and folders are named as the first word they contain.
-    pub fn partition<P>(&self, dist: P, n: usize, f: usize) 
-    where P: AsRef<Path>,
+    pub fn partition<P>(&self, dist: P, n: usize, f: usize)
+    where
+        P: AsRef<Path>,
     {
         info!("Partitioning into {} folders and {} files", f, n);
         let mut dist = dist.as_ref().to_path_buf();
@@ -114,7 +114,7 @@ impl<const D: usize> Word2Vec<D> {
 
         // Sort the words alphabetically.
         let mut words = self.word_vecs.keys().collect::<Vec<_>>();
-        
+
         info!("Sorting {} words", words.len());
         words.sort();
         info!("Done sorting");
@@ -149,11 +149,8 @@ impl<const D: usize> Word2Vec<D> {
     }
 }
 
-impl<const D: usize> Word2VecTrait<D> for Word2Vec<D>  {
+impl<const D: usize> Word2VecTrait<D> for Word2Vec<D> {
     fn get_vec(&self, word: &str) -> Option<&WordVec<D>> {
         self.word_vecs.get(word)
     }
 }
-
-
-
