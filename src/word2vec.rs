@@ -19,6 +19,7 @@ impl<const D: usize> WordVec<D> {
 
     /// Get the vector as a slice.
     pub fn get_vec(&self) -> &[f32; D] {
+        // This is safe because we know the length of the vector.
         self.vec.as_slice().try_into().unwrap()
     }
 
@@ -63,15 +64,23 @@ impl<const D: usize> Word2Vec<D> {
     where
         P: AsRef<Path>,
     {
+        use log::warn;
+
         let mut word_vecs = HashMap::new();
         let lines = crate::file::read_lines(path);
         if let Ok(lines) = lines {
-            for line in lines.skip(1) {
-                let line = line.unwrap();
+            for line in lines.skip(1).flatten() {
                 let mut iter = line.split_whitespace();
-                let word = iter.next().unwrap();
-                let vec = iter.map(|s| s.parse::<f32>().unwrap()).collect::<Vec<_>>();
-                word_vecs.insert(word.to_string(), WordVec::new(vec.try_into().unwrap()));
+                if let Some(word) = iter.next() {
+                    let vec = iter.flat_map(|s| s.parse::<f32>()).collect::<Vec<_>>();
+                    if vec.len() == D {
+                        // This is safe because we know the length of the vector.s
+                        word_vecs.insert(word.to_string(), WordVec::new(vec.try_into().unwrap()));
+                    } else {
+                        warn!("The vector of {} is not of dimension {}, so it wasn't insert.", word, D)
+                    }    
+                }
+                
             }
             Some(Self { word_vecs })
         } else {
@@ -87,38 +96,39 @@ impl<const D: usize> Word2Vec<D> {
 
     /// Save the word2vec model to a binary file with custom serialization.
     #[cfg(feature = "loading")]
-    pub async fn save_to_bytes<P>(&self, path: P)
+    pub async fn save_to_bytes<P>(&self, path: P) -> Result<(), Box<dyn std::error::Error>>
     where
         P: AsRef<Path>,
     {
         let mut bytes = Vec::new();
-        bincode::serialize_into(&mut bytes, &self).unwrap();
-        std::fs::write(path, bytes).unwrap();
+        bincode::serialize_into(&mut bytes, &self)?;
+        std::fs::write(path, bytes)?;
+        Ok(())
     }
 
     /// Load the word2vec model from a binary file with custom serialization.
     #[cfg(feature = "loading")]
-    pub async fn load_from_bytes<P>(path: P) -> Self
+    pub async fn load_from_bytes<P>(path: P) -> Option<Self>
     where
         P: AsRef<Path>,
     {
-        let bytes = std::fs::read(path).unwrap();
-        bincode::deserialize(&bytes).unwrap()
+        let bytes = std::fs::read(path).ok()?;
+        bincode::deserialize(&bytes).ok()
     }
 
     /// Calculate the cosine similarity of two words.
-    pub fn cosine(&self, word1: &str, word2: &str) -> f32 {
-        let vec1 = self.get_vec(word1).unwrap();
-        let vec2 = self.get_vec(word2).unwrap();
+    pub fn cosine(&self, word1: &str, word2: &str) -> Option<f32> {
+        let vec1 = self.get_vec(word1)?;
+        let vec2 = self.get_vec(word2)?;
 
-        vec1.cosine(vec2)
+        Some(vec1.cosine(vec2))
     }
 
     #[cfg(feature = "partition")]
     /// Partition the word2vec model into f folders for a total of n files.
     /// The words are sorted alphabetically and distributed evenly.
     /// Files and folders are named as the first word they contain.
-    pub async fn partition<P>(&self, dist: P, n: usize, f: usize)
+    pub async fn partition<P>(&self, dist: P, n: usize, f: usize) -> Result<(), Box<dyn std::error::Error>>
     where
         P: AsRef<Path>,
     {
@@ -127,7 +137,7 @@ impl<const D: usize> Word2Vec<D> {
         info!("Partitioning into {} folders and {} files", f, n);
         let mut dist = dist.as_ref().to_path_buf();
         dist.push("word2vec");
-        std::fs::create_dir_all(&dist).unwrap();
+        std::fs::create_dir_all(&dist)?;
 
         // Sort the words alphabetically.
         let mut words = self.word_vecs.keys().collect::<Vec<_>>();
@@ -146,23 +156,26 @@ impl<const D: usize> Word2Vec<D> {
             if i % words_per_folder == 0 {
                 current_folder = dist.clone();
                 current_folder.push(words[i]);
-                std::fs::create_dir_all(&current_folder).unwrap();
+                std::fs::create_dir_all(&current_folder)?;
                 trace!("Created folder {}", current_folder.display());
             }
 
-            current_map.insert(word.to_string(), self.get_vec(word).unwrap().clone());
+            if let Some(vec) = self.get_vec(word) {
+                current_map.insert(word.to_string(), vec.clone());
+            }
 
             if i % words_per_file == 0 || i == words.len() - 1 {
                 let mut file = current_folder.clone();
                 file.push(words[i]);
                 file.set_extension("bin");
                 let mut bytes = Vec::new();
-                bincode::serialize_into(&mut bytes, &current_map).unwrap();
-                std::fs::write(file.clone(), bytes).unwrap();
+                bincode::serialize_into(&mut bytes, &current_map)?;
+                std::fs::write(file.clone(), bytes)?;
                 current_map.clear();
                 trace!("Created file {}", file.display());
             }
         }
+        Ok(())
     }
 
     /// Get the subset of words that are in the model from the list.
@@ -178,19 +191,20 @@ impl<const D: usize> Word2Vec<D> {
 
     /// Get the subset of words that are in the model from wordlist.txt.
     #[cfg(feature = "loading")]
-    pub async fn get_subset_from_wordlist<P>(&self, path: P) -> Word2Vec<D>
+    pub async fn get_subset_from_wordlist<P>(&self, path: P) -> Result<Word2Vec<D>, Box<dyn std::error::Error>>
     where
         P: AsRef<Path>,
     {
+
         use crate::file::read_lines;
 
         let mut word_vecs = HashMap::new();
-        for word in crate::file::read_lines(path).unwrap().flatten() {
+        for word in crate::file::read_lines(path)?.flatten() {
             if let Some(vec) = self.get_vec(&word) {
                 word_vecs.insert(word.to_string(), vec.clone());
             }
         }
-        Self { word_vecs }
+        Ok(Self { word_vecs })
     }
 }
 
@@ -230,8 +244,8 @@ mod tests {
         word_vecs.insert("word2".to_string(), WordVec::new([0.0, 1.0]));
         let word2vec = Word2Vec::from_word_vecs(word_vecs).await;
 
-        assert_eq!(word2vec.cosine("word1", "word2"), 0.0);
-        assert_eq!(word2vec.cosine("word1", "word1"), 1.0);
+        assert_eq!(word2vec.cosine("word1", "word2").unwrap(), 0.0);
+        assert_eq!(word2vec.cosine("word1", "word1").unwrap(), 1.0);
     }
 
     #[tokio::test]
@@ -256,7 +270,15 @@ mod tests {
 
         assert_eq!(word2vec.word_vecs.len(), 5);
 
-        assert_eq!(word2vec.cosine("chien", "chat"), 0.0);
+        assert_eq!(word2vec.cosine("chien", "chat").unwrap(), 0.0);
+    }
+
+
+    #[cfg(feature = "loading")]
+    #[tokio::test]
+    async fn test_save_from_byte() {
+        let word2vec: Word2Vec<3> = Word2Vec::load_from_txt("tests/word2vec.txt").await.unwrap();
+        word2vec.save_to_bytes("tests/word2vec.bin").await;
     }
 
 }

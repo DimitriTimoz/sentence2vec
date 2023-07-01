@@ -38,8 +38,12 @@ async fn main() {
         .parse::<usize>()
         .unwrap();
 
-    let word2vec: Word2Vec<300> = Word2Vec::load_from_bytes(path).await;
-    word2vec.partition(dist, partitions, folders).await;
+    let word2vec = Word2Vec::<300>::load_from_bytes(path).await;
+    if let Some(word2vec) = word2vec {
+        if word2vec.partition(dist, partitions, folders).await.is_err() {
+            println!("Error while partitioning.");
+        }
+    }
 }
 
 #[cfg(not(feature = "partition"))]

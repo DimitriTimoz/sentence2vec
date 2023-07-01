@@ -34,7 +34,12 @@ impl<const D: usize> Sentence2Vec<D> {
             for v in vec.iter_mut() {
                 *v /= count as f32;
             }
-            Some(WordVec::new(vec.try_into().unwrap()))
+            let vec = vec.try_into();
+            if let Ok(vec) = vec {
+                Some(WordVec::new(vec))
+            } else {
+                None
+            }
         }
     }
 

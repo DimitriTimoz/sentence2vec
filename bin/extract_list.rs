@@ -21,10 +21,17 @@ async fn main() {
     io::stdout().flush().unwrap();
     let dist = std::io::stdin().lock().lines().next().unwrap().unwrap();
     
-    let word2vec: Word2Vec<300> = Word2Vec::load_from_bytes(path).await;
-
-    let subset = word2vec.get_subset_from_wordlist(wordlist).await;
-    subset.save_to_bytes(dist).await;
+    let word2vec = Word2Vec::<300>::load_from_bytes(path).await;
+    if let Some(word2vec) = word2vec {
+        let subset = word2vec.get_subset_from_wordlist(wordlist).await;
+        if let Ok(subset) = subset {
+            if subset.save_to_bytes(dist).await.is_err() {
+                println!("Error while saving.");
+            }
+        } else {
+            println!("Error while getting subset.");
+        }
+    }
 }
 
 #[cfg(not(feature = "partition"))]
