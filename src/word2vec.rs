@@ -273,7 +273,7 @@ mod tests {
     #[tokio::test]
     async fn test_save_from_byte() {
         let word2vec: Word2Vec<3> = Word2Vec::load_from_txt("tests/word2vec.txt").await.unwrap();
-        word2vec.save_to_bytes("tests/word2vec.bin").await;
+        assert!(word2vec.save_to_bytes("tests/word2vec.bin").await.is_ok());
     }
 
 }
